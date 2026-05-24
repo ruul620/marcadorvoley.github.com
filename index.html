@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marcador Voleibol</title>
+    <title>Marcador Voleibol Pro</title>
     <style>
         :root {
             --bg-color: #22252a;
-            --home-color: #FF7F27;
-            --guest-color: #377E47;
+            --home-color: #FF7F27; /* Cambiado a Naranja */
+            --guest-color: #377E47; /* Cambiado a Verde Oscuro */
             --text-white: #ffffff;
             --gray-text: #8e9297;
             --panel-bg: #1b1d22;
@@ -51,20 +51,44 @@
         }
 
         .team-label {
+            display: inline-flex;
+            align-items: center;
             font-size: 5.5vw;
             font-weight: bold;
             max-width: 38%;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         @media (min-width: 750px) {
             .team-label { font-size: 28px; }
         }
 
+        .team-label-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            flex-shrink: 1;
+        }
+
         .home-text { color: var(--home-color); transition: color 0.3s; }
         .guest-text { color: var(--guest-color); transition: color 0.3s; }
+
+        /* --- ESTILOS DEL LOGO ADAPTABLE --- */
+        .team-logo-img {
+            height: 1.375em; /* Tamaño grande y adaptable */
+            width: auto;     /* Mantiene su proporción original */
+            margin-left: 10px;
+            vertical-align: middle;
+            border-radius: 4px;
+            flex-shrink: 0;   /* Evita que el logo se aplaste */
+            display: inline-block; 
+        }
+
+        /* Solo mostramos la imagen si el src está definido */
+        .team-logo-img[src=""], .team-logo-img:not([src]) {
+            display: none;
+        }
 
         .timer-container {
             font-family: monospace;
@@ -126,7 +150,7 @@
         .minus-score-btn {
             width: 100%;
             background-color: #2d3139;
-            border: 2px solid transparent;
+            border: 2px solid rgba(255,255,255,0.1);
             color: #e0e0e0;
             font-size: 16px;
             font-weight: bold;
@@ -135,14 +159,12 @@
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        .home-column .minus-score-btn { border-color: rgba(255,255,255,0.1); }
-        .guest-column .minus-score-btn { border-color: rgba(255,255,255,0.1); }
         
         .minus-score-btn:active {
             background-color: #404650;
         }
 
-        /* Contenedor Central (Solo para Sets y herramientas globales) */
+        /* Controles Centrales */
         .center-container {
             display: flex;
             flex-direction: column;
@@ -174,7 +196,6 @@
         .home-set-box { background-color: var(--home-color); }
         .guest-set-box { background-color: var(--guest-color); }
 
-        /* Malla de gestión centralizada */
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -272,9 +293,17 @@
 
     <div class="scoreboard-container">
         <div class="header-row">
-            <div class="team-label home-text" id="label-home">ACDSAB</div>
+            <div class="team-label home-text" id="label-home">
+                <span class="team-label-text" id="text-home-display">ACDSAB</span>
+                <span id="logo-space-left"></span> 
+            </div>
+
             <div class="timer-container" id="timer">00:00</div>
-            <div class="team-label guest-text" id="label-guest">EL OTRO</div>
+            
+            <div class="team-label guest-text" id="label-guest">
+                <span class="team-label-text" id="text-guest-display">EL OTRO</span>
+                <span id="logo-space-right"></span> 
+            </div>
         </div>
 
         <div class="main-row">
@@ -313,14 +342,14 @@
                     <label>EQUIPO IZQUIERDA</label>
                     <div class="inputs-inline">
                         <input type="text" id="input-home-name" value="ACDSAB" oninput="updateNames()">
-                        <input type="color" id="input-home-color" value="#ff7f27" oninput="updateColors()">
+                        <input type="color" id="input-home-color" value="#FF7F27" oninput="updateColors()">
                     </div>
                 </div>
                 <div class="setting-group">
                     <label>EQUIPO DERECHA</label>
                     <div class="inputs-inline">
                         <input type="text" id="input-guest-name" value="EL OTRO" oninput="updateNames()">
-                        <input type="color" id="input-guest-color" value="#F44336" oninput="updateColors()">
+                        <input type="color" id="input-guest-color" value="#377E47" oninput="updateColors()">
                     </div>
                 </div>
             </div>
@@ -332,6 +361,7 @@
         let guestPoints = 0;
         let homeSets = 0;
         let guestSets = 0;
+        let homeOnLeft = true; 
 
         // Cronómetro
         let seconds = 0;
@@ -353,8 +383,8 @@
         function updateNames() {
             const homeName = document.getElementById('input-home-name').value || 'HOME';
             const guestName = document.getElementById('input-guest-name').value || 'GUEST';
-            document.getElementById('label-home').innerText = homeName.toUpperCase();
-            document.getElementById('label-guest').innerText = guestName.toUpperCase();
+            document.getElementById('text-home-display').innerText = homeName.toUpperCase();
+            document.getElementById('text-guest-display').innerText = guestName.toUpperCase();
         }
 
         function updateColors() {
@@ -371,36 +401,45 @@
             document.getElementById('guest-sets').innerText = guestSets;
         }
 
-        // FUNCIÓN ESTRELLA: Intercambia absolutamente todo el estado de los lados
+        function updateLogos() {
+            const logoHTML = `<img src="logo.png" alt="Logo" class="team-logo-img">`;
+            
+            if (homeOnLeft) {
+                document.getElementById('logo-space-left').innerHTML = logoHTML;
+                document.getElementById('logo-space-right').innerHTML = '';
+            } else {
+                document.getElementById('logo-space-left').innerHTML = '';
+                document.getElementById('logo-space-right').innerHTML = logoHTML;
+            }
+        }
+
         function swapSides() {
-            // Intercambiar puntos
+            homeOnLeft = !homeOnLeft; 
+
             let tempPoints = homePoints;
             homePoints = guestPoints;
             guestPoints = tempPoints;
 
-            // Intercambiar sets
             let tempSets = homeSets;
             homeSets = guestSets;
             guestSets = tempSets;
 
-            // Intercambiar valores de los inputs de texto (Nombres)
             const inputHome = document.getElementById('input-home-name');
             const inputGuest = document.getElementById('input-guest-name');
             let tempName = inputHome.value;
             inputHome.value = inputGuest.value;
             inputGuest.value = tempName;
 
-            // Intercambiar colores de los inputs
             const colorHome = document.getElementById('input-home-color');
             const colorGuest = document.getElementById('input-guest-color');
             let tempColor = colorHome.value;
             colorHome.value = colorGuest.value;
             colorGuest.value = tempColor;
 
-            // Renderizar los cambios en la pantalla
             updateNames();
             updateColors();
             updateDisplay();
+            updateLogos(); 
         }
 
         function addPoint(team) {
@@ -417,8 +456,8 @@
         }
 
         function checkSetWinner() {
-            const homeName = document.getElementById('label-home').innerText;
-            const guestName = document.getElementById('label-guest').innerText;
+            const homeName = document.getElementById('text-home-display').innerText;
+            const guestName = document.getElementById('text-guest-display').innerText;
             const pointsToWin = (homeSets === 2 && guestSets === 2) ? 15 : 25;
 
             if (homePoints >= pointsToWin && (homePoints - guestPoints) >= 2) {
@@ -465,6 +504,7 @@
         }
 
         updateDisplay();
+        updateLogos();
     </script>
 </body>
 </html>
