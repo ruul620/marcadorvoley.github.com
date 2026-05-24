@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marcador Voleibol Pro Móvil</title>
+    <title>Marcador Voleibol Pro</title>
     <style>
         :root {
             --bg-color: #22252a;
@@ -28,10 +28,10 @@
             margin: 0;
             padding: 10px;
             user-select: none;
-            overflow-y: auto; /* Permite scroll si la pantalla es muy pequeña */
+            overflow-y: auto;
         }
 
-        /* Contenedor Principal Adaptable */
+        /* Contenedor Principal */
         .scoreboard-container {
             background-color: var(--bg-color);
             width: 100%;
@@ -51,9 +51,9 @@
         }
 
         .team-label {
-            font-size: 6vw; /* Tamaño fluido según el ancho de pantalla */
+            font-size: 5.5vw;
             font-weight: bold;
-            max-width: 35%;
+            max-width: 38%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -63,8 +63,8 @@
             .team-label { font-size: 28px; }
         }
 
-        .home-text { color: var(--home-color); }
-        .guest-text { color: var(--guest-color); }
+        .home-text { color: var(--home-color); transition: color 0.3s; }
+        .guest-text { color: var(--guest-color); transition: color 0.3s; }
 
         .timer-container {
             font-family: monospace;
@@ -80,25 +80,33 @@
         .main-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start;
+            gap: 8px;
         }
 
-        /* Bloques de Puntuación Grandes y Flexibles */
-        .points-box {
+        /* Columnas de los Equipos (Marcador + Botón Restar) */
+        .team-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
             flex: 1;
             max-width: 220px;
-            aspect-ratio: 1 / 1; /* Cuadrado perfecto automático */
+        }
+
+        .points-box {
+            width: 100%;
+            aspect-ratio: 1 / 1;
             border-radius: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: transform 0.1s ease;
+            transition: transform 0.1s ease, background-color 0.3s;
         }
 
         .points-box:active {
-            transform: scale(0.95);
+            transform: scale(0.96);
         }
 
         .home-box { background-color: var(--home-color); }
@@ -106,7 +114,7 @@
 
         .points-display {
             font-family: monospace;
-            font-size: 16vw; /* Se encoge en pantallas pequeñas */
+            font-size: 15vw;
             font-weight: bold;
             color: var(--text-white);
         }
@@ -114,23 +122,44 @@
             .points-display { font-size: 110px; }
         }
 
-        /* Contenedor Central */
+        /* Botón de restar dedicado debajo de cada marcador */
+        .minus-score-btn {
+            width: 100%;
+            background-color: #2d3139;
+            border: 2px solid transparent;
+            color: #e0e0e0;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .home-column .minus-score-btn { border-color: rgba(255,255,255,0.1); }
+        .guest-column .minus-score-btn { border-color: rgba(255,255,255,0.1); }
+        
+        .minus-score-btn:active {
+            background-color: #404650;
+        }
+
+        /* Contenedor Central (Solo para Sets y herramientas globales) */
         .center-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            min-width: 120px;
+            gap: 20px;
+            min-width: 100px;
+            margin-top: 15px;
         }
 
         .sets-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .set-box {
-            width: 45px;
-            height: 45px;
+            width: 44px;
+            height: 44px;
             border-radius: 8px;
             display: flex;
             justify-content: center;
@@ -139,40 +168,40 @@
             font-size: 24px;
             font-weight: bold;
             color: var(--text-white);
+            transition: background-color 0.3s;
         }
 
         .home-set-box { background-color: var(--home-color); }
         .guest-set-box { background-color: var(--guest-color); }
 
-        /* Iconos de Control (Zona táctil mejorada) */
+        /* Malla de gestión centralizada */
         .controls-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-            max-width: 160px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
 
         .control-btn {
             background-color: #2d3139;
             border: none;
             color: var(--text-white);
-            font-size: 18px;
-            width: 44px;  /* Tamaño mínimo recomendado para botones táctiles */
-            height: 44px;
+            font-size: 20px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
         .control-btn:active {
             background-color: #404650;
+            transform: scale(0.9);
         }
 
-        /* Panel de Configuración Responsivo */
+        /* Panel de Configuración */
         .settings-panel {
             background-color: var(--panel-bg);
             border-top: 2px solid #2d3139;
@@ -190,15 +219,12 @@
 
         .settings-grid {
             display: grid;
-            grid-template-columns: 1fr; /* En móviles, uno debajo de otro */
+            grid-template-columns: 1fr;
             gap: 15px;
         }
 
-        /* En tablets o PC, se ponen de lado a lado */
         @media (min-width: 480px) {
-            .settings-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+            .settings-grid { grid-template-columns: 1fr 1fr; }
         }
 
         .setting-group {
@@ -252,8 +278,11 @@
         </div>
 
         <div class="main-row">
-            <div class="points-box home-box" onclick="addPoint('home')">
-                <span class="points-display" id="home-points">00</span>
+            <div class="team-column home-column">
+                <div class="points-box home-box" onclick="addPoint('home')">
+                    <span class="points-display" id="home-points">00</span>
+                </div>
+                <button class="minus-score-btn" onclick="minusPoint('home')">− 1</button>
             </div>
 
             <div class="center-container">
@@ -263,30 +292,32 @@
                 </div>
                 
                 <div class="controls-grid">
-                    <button class="control-btn" title="Restar punto Local" onclick="minusPoint('home')">-L</button>
                     <button class="control-btn" title="Restablecer set" onclick="resetCurrentSet()">↩</button>
+                    <button class="control-btn" title="Intercambiar lados / campo" onclick="swapSides()">⇄</button>
                     <button class="control-btn" title="Reiniciar partido" onclick="resetMatch()">↻</button>
-                    <button class="control-btn" title="Restar punto Visitante" onclick="minusPoint('guest')">-V</button>
                     <button class="control-btn" title="Configuración" onclick="toggleSettings()">⚙️</button>
                 </div>
             </div>
 
-            <div class="points-box guest-box" onclick="addPoint('guest')">
-                <span class="points-display" id="guest-points">00</span>
+            <div class="team-column guest-column">
+                <div class="points-box guest-box" onclick="addPoint('guest')">
+                    <span class="points-display" id="guest-points">00</span>
+                </div>
+                <button class="minus-score-btn" onclick="minusPoint('guest')">− 1</button>
             </div>
         </div>
 
         <div class="settings-panel" id="settingsPanel">
             <div class="settings-grid">
                 <div class="setting-group">
-                    <label>EQUIPO LOCAL</label>
+                    <label>EQUIPO IZQUIERDA</label>
                     <div class="inputs-inline">
                         <input type="text" id="input-home-name" value="HOME" oninput="updateNames()">
                         <input type="color" id="input-home-color" value="#2196F3" oninput="updateColors()">
                     </div>
                 </div>
                 <div class="setting-group">
-                    <label>EQUIPO VISITANTE</label>
+                    <label>EQUIPO DERECHA</label>
                     <div class="inputs-inline">
                         <input type="text" id="input-guest-name" value="GUEST" oninput="updateNames()">
                         <input type="color" id="input-guest-color" value="#F44336" oninput="updateColors()">
@@ -314,12 +345,8 @@
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
             panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-            
-            // Auto-scroll hacia abajo para asegurar que el panel se vea al abrirse en pantallas cortas
             if (panel.style.display === 'block') {
-                setTimeout(() => {
-                    panel.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }, 100);
+                setTimeout(() => { panel.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 100);
             }
         }
 
@@ -342,6 +369,38 @@
             document.getElementById('guest-points').innerText = guestPoints.toString().padStart(2, '0');
             document.getElementById('home-sets').innerText = homeSets;
             document.getElementById('guest-sets').innerText = guestSets;
+        }
+
+        // FUNCIÓN ESTRELLA: Intercambia absolutamente todo el estado de los lados
+        function swapSides() {
+            // Intercambiar puntos
+            let tempPoints = homePoints;
+            homePoints = guestPoints;
+            guestPoints = tempPoints;
+
+            // Intercambiar sets
+            let tempSets = homeSets;
+            homeSets = guestSets;
+            guestSets = tempSets;
+
+            // Intercambiar valores de los inputs de texto (Nombres)
+            const inputHome = document.getElementById('input-home-name');
+            const inputGuest = document.getElementById('input-guest-name');
+            let tempName = inputHome.value;
+            inputHome.value = inputGuest.value;
+            inputGuest.value = tempName;
+
+            // Intercambiar colores de los inputs
+            const colorHome = document.getElementById('input-home-color');
+            const colorGuest = document.getElementById('input-guest-color');
+            let tempColor = colorHome.value;
+            colorHome.value = colorGuest.value;
+            colorGuest.value = tempColor;
+
+            // Renderizar los cambios en la pantalla
+            updateNames();
+            updateColors();
+            updateDisplay();
         }
 
         function addPoint(team) {
