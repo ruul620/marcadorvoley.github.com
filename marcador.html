@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcador de Voleibol Pro</title>
+    <style>
+        :root {
+            --bg-color: #22252a;
+            --home-color: #2196F3; /* Azul por defecto */
+            --guest-color: #F44336; /* Rojo por defecto */
+            --text-white: #ffffff;
+            --gray-text: #8e9297;
+            --panel-bg: #1b1d22;
+        }
+
+        body {
+            background-color: #121417;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        /* Contenedor Principal */
+        .scoreboard-container {
+            background-color: var(--bg-color);
+            width: 720px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Fila Superior: Nombres y Tiempo */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .team-label {
+            font-size: 28px;
+            font-weight: bold;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .home-text { color: var(--home-color); }
+        .guest-text { color: var(--guest-color); }
+
+        .timer-container {
+            font-family: monospace;
+            font-size: 32px;
+            color: var(--gray-text);
+            letter-spacing: 2px;
+        }
+
+        /* Fila Central: Puntos y Sets */
+        .main-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Bloques de Puntuación Grande */
+        .points-box {
+            width: 210px;
+            height: 210px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.2s;
+        }
+
+        .points-box:active {
+            transform: scale(0.95);
+        }
+
+        .points-box:hover {
+            filter: brightness(1.1);
+        }
+
+        .home-box { background-color: var(--home-color); }
+        .guest-box { background-color: var(--guest-color); }
+
+        .points-display {
+            font-family: monospace;
+            font-size: 120px;
+            font-weight: bold;
+            color: var(--text-white);
+        }
+
+        /* Contenedor de Sets y Controles (Centro) */
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .sets-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .set-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--text-white);
+        }
+
+        .home-set-box { background-color: var(--home-color); }
+        .guest-set-box { background-color: var(--guest-color); }
+
+        /* Iconos de Control Inferiores */
+        .controls-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--gray-text);
+            font-size: 22px;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.1s;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            color: var(--text-white);
+            transform: scale(1.1);
+        }
+
+        /* Panel de Configuración Desplegable */
+        .settings-panel {
+            background-color: var(--panel-bg);
+            border-top: 2px solid #2d3139;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none; /* Se controla con JS */
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-group label {
+            color: var(--gray-text);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .inputs-inline {
+            display: flex;
+            gap: 10px;
+        }
+
+        .setting-group input[type="text"] {
+            background-color: #2b2f36;
+            border: 1px solid #404650;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            flex-grow: 1;
+        }
+
+        .setting-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--gray-text);
+        }
+
+        .setting-group input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scoreboard-container">
+        <div class="header-row">
+            <div class="team-label home-text" id="label-home">HOME</div>
+            <div class="timer-container" id="timer">00:00</div>
+            <div class="team-label guest-text" id="label-guest">GUEST</div>
+        </div>
+
+        <div class="main-row">
+            <div class="points-box home-box" onclick="addPoint('home')" title="Sumar punto a Local">
+                <span class="points-display" id="home-points">00</span>
+            </div>
+
+            <div class="center-container">
+                <div class="sets-row">
+                    <div class="set-box home-set-box" id="home-sets">0</div>
+                    <div class="set-box guest-set-box" id="guest-sets">0</div>
+                </div>
+                
+                <div class="controls-grid">
+                    <button class="control-btn" title="Restar punto Local" onclick="minusPoint('home')">➖L</button>
+                    <button class="control-btn" title="Restablecer puntos del Set" onclick="resetCurrentSet()">↩</button>
+                    <button class="control-btn" title="Reiniciar Partido Completo" onclick="resetMatch()">↻</button>
+                    <button class="control-btn" title="Restar punto Visitante" onclick="minusPoint('guest')">➖V</button>
+                    <button class="control-btn" title="Configurar Nombres y Colores" onclick="toggleSettings()">⚙️</button>
+                </div>
+            </div>
+
+            <div class="points-box guest-box" onclick="addPoint('guest')" title="Sumar punto a Visitante">
+                <span class="points-display" id="guest-points">00</span>
+            </div>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <label>EQUIPO LOCAL</label>
+                    <div class="inputs-inline">
+                        <input type="text" id="input-home-name" value="HOME" oninput="updateNames()">
+                        <input type="color" id="input-home-color" value="#2196F3" oninput="updateColors()">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>EQUIPO VISITANTE</label>
+                    <div class="inputs-inline">
+                        <input type="text" id="input-guest-name" value="GUEST" oninput="updateNames()">
+                        <input type="color" id="input-guest-color" value="#F44336" oninput="updateColors()">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado del juego
+        let homePoints = 0;
+        let guestPoints = 0;
+        let homeSets = 0;
+        let guestSets = 0;
+
+        // Cronómetro
+        let seconds = 0;
+        setInterval(() => {
+            seconds++;
+            let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${mins}:${secs}`;
+        }, 1000);
+
+        // Muestra/Oculta el panel de configuración
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+            } else {
+                panel.style.display = 'block';
+            }
+        }
+
+        // Actualiza los nombres en tiempo real mientras escribes
+        function updateNames() {
+            const homeName = document.getElementById('input-home-name').value || 'HOME';
+            const guestName = document.getElementById('input-guest-name').value || 'GUEST';
+            
+            document.getElementById('label-home').innerText = homeName.toUpperCase();
+            document.getElementById('label-guest').innerText = guestName.toUpperCase();
+        }
+
+        // Actualiza los colores dinámicamente usando variables CSS
+        function updateColors() {
+            const homeColor = document.getElementById('input-home-color').value;
+            const guestColor = document.getElementById('input-guest-color').value;
+
+            document.documentElement.style.setProperty('--home-color', homeColor);
+            document.documentElement.style.setProperty('--guest-color', guestColor);
+        }
+
+        // Actualizar los elementos numéricos en pantalla
+        function updateDisplay() {
+            document.getElementById('home-points').innerText = homePoints.toString().padStart(2, '0');
+            document.getElementById('guest-points').innerText = guestPoints.toString().padStart(2, '0');
+            document.getElementById('home-sets').innerText = homeSets;
+            document.getElementById('guest-sets').innerText = guestSets;
+        }
+
+        // Añadir punto
+        function addPoint(team) {
+            if (team === 'home') homePoints++;
+            else guestPoints++;
+            
+            checkSetWinner();
+            updateDisplay();
+        }
+
+        // Restar punto
+        function minusPoint(team) {
+            if (team === 'home' && homePoints > 0) homePoints--;
+            if (team === 'guest' && guestPoints > 0) guestPoints--;
+            updateDisplay();
+        }
+
+        // Reglas oficiales de voleibol
+        function checkSetWinner() {
+            const homeName = document.getElementById('label-home').innerText;
+            const guestName = document.getElementById('label-guest').innerText;
+            
+            // 5º Set (Tie-break) a 15 puntos, el resto a 25.
+            const pointsToWin = (homeSets === 2 && guestSets === 2) ? 15 : 25;
+
+            if (homePoints >= pointsToWin && (homePoints - guestPoints) >= 2) {
+                homeSets++;
+                alert(`¡Set para ${homeName}!`);
+                resetSetPoints();
+            }
+            else if (guestPoints >= pointsToWin && (guestPoints - homePoints) >= 2) {
+                guestSets++;
+                alert(`¡Set para ${guestName}!`);
+                resetSetPoints();
+            }
+
+            // Ganador definitivo (al mejor de 5 sets, es decir, gana el que llegue a 3)
+            if (homeSets === 3) {
+                alert(`¡PARTIDO TERMINADO!\nGanador: ${homeName}`);
+                resetMatch(true);
+            } else if (guestSets === 3) {
+                alert(`¡PARTIDO TERMINADO!\nGanador: ${guestName}`);
+                resetMatch(true);
+            }
+        }
+
+        function resetSetPoints() {
+            homePoints = 0;
+            guestPoints = 0;
+        }
+
+        function resetCurrentSet() {
+            if(confirm("¿Seguro que quieres reiniciar los puntos del set actual?")) {
+                resetSetPoints();
+                updateDisplay();
+            }
+        }
+
+        function resetMatch(force = false) {
+            if(force || confirm("¿Quieres reiniciar el partido por completo?")) {
+                homePoints = 0;
+                guestPoints = 0;
+                homeSets = 0;
+                guestSets = 0;
+                seconds = 0;
+                updateDisplay();
+            }
+        }
+
+        // Inicializar
+        updateDisplay();
+    </script>
+</body>
+</html>
